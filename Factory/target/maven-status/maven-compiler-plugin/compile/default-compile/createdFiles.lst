@@ -1,0 +1,10 @@
+test/RoadTile.class
+test/CityMap.class
+test/Tile.class
+test/Game.class
+test/WaterTile.class
+test/SwampTile.class
+test/BuildingTile.class
+test/Map.class
+test/ForestTile.class
+test/WildernessMap.class
