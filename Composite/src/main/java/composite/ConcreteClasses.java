@@ -2,23 +2,47 @@ package composite;
 
 import java.util.ArrayList;
 
-class Worker extends Organization {
-  Worker(String name, int depth, float salary) {
+class Worker extends Corpo {
+  private float salary;
+
+  Worker(String name, float salary) {
     this.name = name;
-    this.depth = depth;
+    this.salary = salary;
   }
 
-  @Override
-  ArrayList<String> print() {
-    lines.add(StringObj.getText("<name>", depth));
-    lines.add(StringObj.getText(name, depth + 1));
-    lines.add(StringObj.getText("</name>", depth));
-    return lines;
+  public float getSalary() {
+    return salary;
   }
 }
 
-class Department {
+class Department extends Corpo {
+  private ArrayList<Corpo> children;
 
+  Department(String name) {
+    this.name = name;
+    children = new ArrayList<>();
+  }
+
+  public float getSalary() {
+    float sum = 0;
+    for (Corpo corpo : children) {
+      sum += corpo.getSalary();
+    }
+    return sum;
+  }
+
+  void addChild(Corpo corpo) {
+    this.children.add(corpo);
+  }
+
+  void removeChild(Corpo corpo) {
+    this.children.remove(corpo);
+  }
+
+  @Override
+  public ArrayList<Corpo> getChildren() {
+    return children;
+  }
 }
 
 class StringObj {
