@@ -1,0 +1,2 @@
+History view functionality
+Click Signal -> fori in reverse until reaches desired state.
