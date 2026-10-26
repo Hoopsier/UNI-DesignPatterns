@@ -30,6 +30,7 @@ public class Gui extends Application {
 
   private static final double POINT_SPACING = 30;
   private static final double HISTORY_HEIGHT = 40;
+  private static final double HISTORY_WIDTH = 300;
 
   public void start(Stage stage) {
 
@@ -61,11 +62,13 @@ public class Gui extends Application {
     historyPane = new Pane();
     historyPane.setPrefHeight(HISTORY_HEIGHT);
     historyPane.setMinHeight(HISTORY_HEIGHT);
+    historyPane.setPrefWidth(HISTORY_WIDTH);
+    historyPane.setMinWidth(HISTORY_WIDTH);
 
     historyBox = new HBox(historyPane);
     historyBox.setPadding(insets);
 
-    // Horizontal history line
+    // Vertical history line
     historyLine = new Line(10, 20, 10, 20);
     historyLine.setStroke(Color.GRAY);
     historyLine.setStrokeWidth(2);
@@ -104,51 +107,45 @@ public class Gui extends Application {
     stage.show();
   }
 
-  // Append a point to the undo history line
+  // Draw the vertical undo history. Undo/redo only moves the current index, so
+  // the points keep their positions until the redo tail is cleared.
   public void reloadHistory() {
     historyPane.getChildren().clear();
+    historyPane.getChildren().add(historyLine);
 
-    List<IMemento> history = controller.getHistory();
+    List<HistoryPoint> history = controller.getHistory();
 
-    if (history.isEmpty()) {
-      historyLine.setEndX(10);
-      return;
-    }
-
-    long firstTimestamp = history.get(0).getTimestamp().getTime();
-    long lastTimestamp = history.get(history.size() - 1).getTimestamp().getTime();
-
-    double startX = 10;
-    double endX = startX;
+    double startY = 20;
+    double endY = startY;
 
     for (int i = 0; i < history.size(); i++) {
-      IMemento memento = history.get(i);
+      HistoryPoint historyPoint = history.get(i);
+      double y = startY + i * POINT_SPACING;
+      endY = y;
 
-      double x;
+      Circle dot = historyPoint.getDot();
+      historyPoint.setPosition(10, y);
 
-      if (lastTimestamp == firstTimestamp) {
-        x = startX + i * POINT_SPACING;
-      } else {
-        x = startX + (memento.getTimestamp().getTime() - firstTimestamp)
-            * POINT_SPACING / 1000.0;
-      }
-
-      endX = Math.max(endX, x);
-
-      Circle point = new Circle(x, 20, 5);
-      point.setFill(Color.ORANGERED);
+      HBox infoBox = historyPoint.getInfoBox();
+      infoBox.setLayoutX(25);
+      infoBox.setLayoutY(y - 10);
 
       final int step = i;
-      point.setOnMouseClicked(event -> {
-        controller.restore(step);
-      });
+      dot.setOnMouseClicked(event -> controller.restore(step));
+      infoBox.setOnMouseClicked(event -> controller.restore(step));
 
-      historyPane.getChildren().add(point);
+      historyPane.getChildren().addAll(dot, infoBox);
     }
 
-    historyLine.setEndX(endX);
-    historyPane.setMinWidth(endX + POINT_SPACING);
-    historyPane.setPrefWidth(endX + POINT_SPACING);
+    historyLine.setStartX(10);
+    historyLine.setStartY(startY);
+    historyLine.setEndX(10);
+    historyLine.setEndY(endY);
+
+    historyPane.setMinHeight(endY + POINT_SPACING);
+    historyPane.setPrefHeight(endY + POINT_SPACING);
+    historyPane.setMinWidth(HISTORY_WIDTH);
+    historyPane.setPrefWidth(HISTORY_WIDTH);
   }
 
   public void updateGui() {

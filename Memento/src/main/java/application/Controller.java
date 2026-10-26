@@ -1,24 +1,26 @@
 package application;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class Controller {
   private Model model;
   private Gui gui;
-  private List<IMemento> history; // Memento history
-  private List<IMemento> redoHistory = new ArrayList<>();
+  private List<HistoryPoint> history = new ArrayList<>();
+  private int currentStep; // index of the state currently shown by the model
 
   public Controller(Gui gui) {
     this.model = new Model();
     this.gui = gui;
-    this.history = new ArrayList<>();
+    // The initial state is the first point in the timeline.
+    history.add(new HistoryPoint(model.createMemento("Root", "Start point")));
+    currentStep = 0;
   }
 
   public void setOption(int optionNumber, int choice) {
-    saveToHistory();
     model.setOption(optionNumber, choice);
+    saveToHistory("Square", "Color " + choice);
+    gui.updateGui();
   }
 
   public int getOption(int optionNumber) {
@@ -26,8 +28,9 @@ public class Controller {
   }
 
   public void setIsSelected(boolean isSelected) {
-    saveToHistory();
     model.setIsSelected(isSelected);
+    saveToHistory("Checkbox", "Checked " + isSelected);
+    gui.updateGui();
   }
 
   public boolean getIsSelected() {
@@ -35,54 +38,52 @@ public class Controller {
   }
 
   public void undo() {
-    if (!history.isEmpty()) {
-      System.out.println("Memento found in history");
-      redoHistory.add(model.createMemento());
-      IMemento previousState = history.remove(history.size() - 1);
-      model.restoreState(previousState);
-      gui.updateGui();
-    }
-  }
-
-  public void restore(int step) {
-    if (history.isEmpty()) {
+    if (currentStep == 0) {
       return;
     }
-    for (int i = history.size(); i >= step; i--) {
-      IMemento undone = history.remove(history.size() - 1);
-      model.restoreState(undone);
-      redoHistory.add(undone);
-      gui.updateGui();
-    }
-  }
-
-  public void redo() {
-    if (redoHistory.isEmpty()) {
-      return;
-    }
-    history.add(model.createMemento());
-    System.out.println("Memento found in history");
-    IMemento redoneMemento = redoHistory.remove(redoHistory.size() - 1);
-    model.restoreState(redoneMemento);
+    currentStep--;
+    model.restoreState(history.get(currentStep).getMemento());
     gui.updateGui();
   }
 
+  public void redo() {
+    if (currentStep >= history.size() - 1) {
+      return;
+    }
+    currentStep++;
+    model.restoreState(history.get(currentStep).getMemento());
+    gui.updateGui();
+  }
+
+  // Used when clicking a point in the history timeline.
+  public void restore(int step) {
+    if (step < 0 || step >= history.size() || step == currentStep) {
+      return;
+    }
+    currentStep = step;
+    model.restoreState(history.get(currentStep).getMemento());
+    gui.updateGui();
+  }
+
+  // Removes the states after the current point. Called when a new change is made.
   public void clearRedo() {
-    redoHistory.clear();
+    if (currentStep < history.size() - 1) {
+      history.subList(currentStep + 1, history.size()).clear();
+    }
   }
 
-  private void saveToHistory() {
-    IMemento currentState = model.createMemento();
+  private void saveToHistory(String title, String action) {
     clearRedo();
-    history.add(currentState);
+    history.add(new HistoryPoint(model.createMemento(title, action)));
+    currentStep = history.size() - 1;
   }
 
-  public List<IMemento> getHistory() {
-    List<IMemento> combined = new ArrayList<>();
-    combined.addAll(history);
-    combined.addAll(redoHistory);
-    Collections.sort(combined, new MementoComparator());
-    return combined;
+  public List<HistoryPoint> getHistory() {
+    return List.copyOf(history);
+  }
+
+  public int getCurrentStep() {
+    return currentStep;
   }
 
 }
