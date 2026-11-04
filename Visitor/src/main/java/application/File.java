@@ -22,4 +22,8 @@ public class File implements FileSystemElement {
   public String getExtention() {
     return extention;
   }
+
+  public void accept(FileSystemVisitor visitor) {
+    visitor.visitFile(this);
+  }
 }

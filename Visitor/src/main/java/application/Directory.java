@@ -27,4 +27,8 @@ public class Directory implements FileSystemElement {
   public String getName() {
     return name;
   }
+
+  public void accept(FileSystemVisitor visitor) {
+    visitor.visitDirectory(this);
+  }
 }

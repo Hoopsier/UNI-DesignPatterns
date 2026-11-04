@@ -1,9 +1,7 @@
 package application;
 
-import java.util.List;
+public interface FileSystemVisitor {
+  public void visitFile(File element);
 
-interface FileSystemVisitor {
-  public FileSystemElement visitFile(File element);
-
-  public List<FileSystemElement> visitDirectory(Directory element);
+  public void visitDirectory(Directory element);
 }
